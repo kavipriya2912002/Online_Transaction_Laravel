@@ -18,9 +18,9 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Route::get('/dashboard', function () {
+//     return Inertia::render('Dashboard');
+// })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/transfer', [TransferController::class, 'index'])->name('transfer.page');
 Route::post('/transfers', [TransferController::class, 'store'])->name('transfers.submit');
