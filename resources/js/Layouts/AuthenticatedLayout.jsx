@@ -8,6 +8,7 @@ import axios from 'axios'; // Ensure axios is imported
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
+    const {walletBalance} =usePage().props;
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -42,7 +43,21 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     Welcome {user.name}
                                 </NavLink>
+                                <NavLink
+                                    href={route('wallet')}
+                                    className={route().current('wallet')} // Active class logic
+                                >
+                                    Wallet
+                                </NavLink>
+
                             </div>
+                        </div>
+
+                        {/* Display wallet balance */}
+                        <div className="hidden sm:flex sm:items-center sm:ml-6">
+                            <span className="text-gray-500 font-bold text-lg">
+                                Wallet Balance: ₹{walletBalance}
+                            </span>
                         </div>
 
                         <div className="hidden sm:ms-6 sm:flex sm:items-center">

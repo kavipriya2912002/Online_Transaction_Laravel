@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
+import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import 'react-toastify/dist/ReactToastify.css';
 
 import React, { useState, useEffect } from 'react';
@@ -15,6 +16,16 @@ const Admin = ({ transactions = [], notifications: initialNotifications }) => {
         console.error("Expected notifications to be an array, got:", notifications);
         return <div className="text-center text-red-500">Error: Notifications data is not available.</div>; // Optional error handling
     }
+    const handleLogout = async (event) => {
+        event.preventDefault();
+        try {
+            await axios.post(route('admin.logout')); // Use Inertia's route helper
+            localStorage.clear(); // Clear local storage
+            window.location.href = '/'; // Redirect after logout
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    };
 
     const handleSuccess = async (notificationId) => {
         try {
@@ -117,11 +128,23 @@ const Admin = ({ transactions = [], notifications: initialNotifications }) => {
         <AuthenticatedLayout>
             <Head title="Dashboard" />
             <ToastContainer />
+            
 
             <div className="py-12 bg-blue-100 min-h-screen">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 shade text-gray-900">
+                        <div className="flex justify-end mb-4">
+                                <ResponsiveNavLink
+                                    method="post"
+                                    href="#"
+                                    onClick={handleLogout}
+                                    as="button"
+                                    className="text-blue-600 font-bold underline"
+                                >
+                                    Log Out
+                                </ResponsiveNavLink>
+                            </div>
                             {/* Tab buttons */}
                             <div className="flex space-x-4 mb-6">
                                 <button
@@ -136,6 +159,7 @@ const Admin = ({ transactions = [], notifications: initialNotifications }) => {
                                 >
                                     Status
                                 </button>
+                                
                             </div>
 
                             {/* Conditional rendering based on active tab */}
