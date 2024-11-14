@@ -14,17 +14,17 @@ export default function Wallet() {
 
         axios.post('/wallet', { amount: parseFloat(amount) })  // Ensure amount is a number
             .then((response) => {
-                setMessage(response.data.message || 'Funds added successfully!');
+                setMessage(response.data.message || 'Money Added to wallet!!');
                 setAmount(''); // Clear the input field
 
-                toast.success("Funds added successfully!", {
+                toast.success("Money Added to wallet !!", {
                     autoClose: 3000,
                     style: {
-                        backgroundColor: 'white', // Change background color
-                        color: 'black', // Change text color
-                        borderRadius: '8px', // Add border radius
-                        padding: '10px', // Add padding
-                        fontSize: '14px', // Set font size
+                        backgroundColor: 'white',
+                        color: 'black',
+                        borderRadius: '8px',
+                        padding: '10px',
+                        fontSize: '14px',
                     },
                 });
                 
@@ -33,7 +33,6 @@ export default function Wallet() {
                 const errorMessage = error.response?.data?.message || 'Error: Unable to add money.';
                 setMessage(errorMessage);
 
-                // Display a toast error notification
                 toast.error(errorMessage);
             });
     };
@@ -68,8 +67,17 @@ export default function Wallet() {
                     </button>
                 </form>
 
-                {/* Toast notification container with top-right position */}
-                <ToastContainer position="top-right" color='black' autoClose={3000} hideProgressBar />
+                {/* Toast notification container with top-right position and custom margin */}
+                <ToastContainer
+                    position="top-right"
+                    autoClose={3000}
+                    hideProgressBar
+                    style={{ marginTop: '70px',
+                        color: 'black',
+                        borderRadius: '8px',
+                        padding: '10px',
+                        fontSize: '14px' }} // Adjust this value as needed
+                />
             </div>
         </AuthenticatedLayout>
     );
