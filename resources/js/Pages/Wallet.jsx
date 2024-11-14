@@ -25,7 +25,7 @@ export default function Wallet() {
     <Head title="Dashboard" />
 
     <div className="container mx-auto p-6 flex flex-col items-center">
-        <h1 className="text-4xl font-bold text-gray-800 mb-6 text-center">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
             Add Money to Wallet
         </h1>
         <form
