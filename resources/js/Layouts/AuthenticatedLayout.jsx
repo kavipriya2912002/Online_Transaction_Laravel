@@ -3,15 +3,54 @@ import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import { Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
 import axios from 'axios'; // Ensure axios is imported
+import { useState, useEffect } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
-    const {walletBalance} =usePage().props;
-
+    const [localToken, setLocalToken] = useState('');
+    const [walletBalance, setWalletBalance] = useState(0);
+    //const {walletBalance} =usePage().props;
+    const walletBalanceRoute = route('wallet.balance');
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
+    useEffect(() => {
+
+        const storedToken = localStorage.getItem('token');
+
+        if (storedToken) {
+
+            setLocalToken(storedToken);
+
+        }
+    }, []);
+    useEffect(() => {
+        // Fetch wallet balance on component load
+        fetchWalletBalance();
+    }, []);
+
+    const fetchWalletBalance = async () => {
+        try {
+            const response = await axios.get(walletBalanceRoute, {
+                headers: {
+                    Authorization: `Bearer ${localToken}`,
+                },
+            });
+            console.log(response);
+            setWalletBalance(response.data.balance);
+        } catch (error) {
+            if (error.response) {
+                // Response error
+                console.error("API error:", error.response.data);
+                console.error("Status code:", error.response.status);
+            } else if (error.request) {
+                // Request error
+                console.error("Request error:", error.request);
+            } else {
+                console.error("Error:", error.message);
+            }
+        }
+    };
 
     const handleLogout = async (event) => {
         event.preventDefault();
