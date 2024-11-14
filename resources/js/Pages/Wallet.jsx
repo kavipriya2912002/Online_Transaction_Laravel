@@ -48,7 +48,7 @@ export default function Wallet() {
                 </h1>
                 <form
                     onSubmit={handleAddMoney}
-                    className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md"
+                    className="bg-white shade p-8 rounded-lg shadow-lg w-full max-w-md"
                 >
                     <label className="block text-gray-700 text-lg font-semibold mb-2">
                         Enter Amount
