@@ -29,6 +29,8 @@ export default function Dashboard({ notifications = [] }) {
     const [error, setError] = useState(null);
     const [isOpen, setIsOpen] = useState(false);
     const [transactions, setTransactions] = useState([]);
+    const [walletBalance, setWalletBalance] = useState(0);
+    const [message, setMessage] = useState('');
 
     useEffect(() => {
         const storedEmail = localStorage.getItem('userEmail');
@@ -45,11 +47,72 @@ export default function Dashboard({ notifications = [] }) {
     }, []);
 
     useEffect(() => {
+        // Fetch wallet balance on component load
+        fetchWalletBalance();
+    }, []);
+
+
+
+
+
+    useEffect(() => {
         const storedTab = localStorage.getItem('activeTab');
         if (storedTab) {
             setActiveTab(storedTab);
         }
     }, []);
+
+
+    const walletBalanceRoute = route('wallet.balance');
+
+    const fetchWalletBalance = async () => {
+        try {
+            const response = await axios.get(walletBalanceRoute, {
+                headers: {
+                    Authorization: `Bearer ${localToken}`,
+                },
+            });
+            console.log(response);
+            setWalletBalance(response.data.balance);
+        } catch (error) {
+            if (error.response) {
+                // Response error
+                console.error("API error:", error.response.data);
+                console.error("Status code:", error.response.status);
+            } else if (error.request) {
+                // Request error
+                console.error("Request error:", error.request);
+            } else {
+                console.error("Error:", error.message);
+            }
+        }
+    };
+    
+
+    const handleDeductMoney = (amount) => {
+        const parsedAmount = parseFloat(amount); // Ensure the amount is a number
+    
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+            setMessage('Please enter a valid amount greater than zero.');
+            return;
+        }
+    
+        axios.post('/wallet/deduct', { amount: parsedAmount })
+            .then((response) => {
+                setMessage(response.data.message || 'Funds deducted successfully!');
+                setAmount(''); // Clear the input field
+            })
+            .catch((error) => {
+                // Safely handle possible error messages
+                const errorMessage = error.response?.data?.error || 'Error: Unable to deduct funds.';
+                setMessage(errorMessage);
+            });
+    };
+    
+    console.log("API Route:", walletBalanceRoute);
+    console.log("Token:", localToken);
+    
+
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
@@ -155,37 +218,72 @@ export default function Dashboard({ notifications = [] }) {
     
 
 
-
     const submitTransferDetails = (e) => {
         e.preventDefault();
-
         const amount = parseFloat(data.amount);
+    
+        console.log("Wallet Balance:", walletBalance);
+        console.log("Transfer Amount:", amount);
+    
+        // Check if wallet balance is zero
+        if (walletBalance === 0) {
+            toast.error("Insufficient balance in wallet.", {
+                autoClose: 3000,
+                style: {
+                    backgroundColor: 'white',
+                    color: 'black',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    fontSize: '14px',
+                },
+            });
+            return;
+        }
+    
+        // Check if the transfer amount is greater than the wallet balance
+        if (amount > walletBalance) {
+            toast.error("Insufficient balance in wallet.", {
+                autoClose: 3000,
+                style: {
+                    backgroundColor: 'white',
+                    color: 'black',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    fontSize: '14px',
+                },
+            });
+            return;
+        }
+    
         const isCompany = data.receiverAccountHolderName.toLowerCase() === 'company';
-
-        // Validate the transfer amount based on account type
-        if (amount < 100000 && isCompany) {
-            toast.error("Transfer amount less than 100,000 cannot be sent to a company account.", {
-                autoClose: 3000, // Display success message for 30 seconds
-                style: {
-                    fontSize: '14px', // Adjust the font size as needed
-                    padding: '10px', // Adjust padding to minimize size
-                },
-            });
-            return;
-        }
-
+    
+        // Validate transfer amount for company and personal accounts
         if (amount >= 100000 && !isCompany) {
-            toast.error("Transfer amount of 100,000 or more must be sent to a company account.l", {
-                autoClose: 3000, // Display success message for 30 seconds
+            toast.error("Transfer amount of 100,000 or more must be sent to a company account.", {
+                autoClose: 3000,
                 style: {
-                    fontSize: '14px', // Adjust the font size as needed
-                    padding: '10px', // Adjust padding to minimize size
+                    backgroundColor: 'white',
+                    color: 'black',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    fontSize: '14px',
                 },
             });
-            
+            return;
+        } else if (amount < 100000 && isCompany) {
+            toast.error("Transfer amount less than 100,000 cannot be sent to a company account.", {
+                autoClose: 3000,
+                style: {
+                    backgroundColor: 'white',
+                    color: 'black',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    fontSize: '14px',
+                },
+            });
             return;
         }
-
+    
         // Proceed with submitting the transfer details
         post(route('transfers.submit'), {
             data: {
@@ -195,29 +293,36 @@ export default function Dashboard({ notifications = [] }) {
                 amount: data.amount,
             },
             onSuccess: () => {
-                setIsOpen(false); // Close modal on success
+                // Call handleDeductMoney function to update wallet balance
+                handleDeductMoney(amount);  // Pass the amount to deduct
+                
+                console.log('walletBalanceagain', walletBalance);
+                
+                // Notify the user
+                setIsOpen(false);
                 toast.success("Transaction Successful", {
-                    autoClose: 3000, // Display success message for 30 seconds
+                    autoClose: 3000,
                     style: {
-                        backgroundColor: 'white', // Change background color
-                        color: 'black', // Change text color
-                        borderRadius: '8px', // Add border radius
-                        padding: '10px', // Add padding
-                        fontSize: '14px', // Set font size
+                        backgroundColor: 'white',
+                        color: 'black',
+                        borderRadius: '8px',
+                        padding: '10px',
+                        fontSize: '14px',
                     },
                 });
-                notifyAdmin(); // Notify admin about the transaction
+                notifyAdmin();
                 setActiveTab('utr');
             },
             onError: () => {
                 toast.error("Transaction failed. Please try again.");
                 setIsOpen(true);
-            }
+            },
         });
     };
-
+     
+    
     console.log('userId', userId);
-
+    
     const submit = (e) => {
         e.preventDefault();
         post(route('utr.store'), {
@@ -247,12 +352,12 @@ export default function Dashboard({ notifications = [] }) {
         console.error("Expected notifications to be an array, got:", notifications);
         return <div className="text-center text-red-500">Error: Notifications data is not available.</div>;
     }
-
+    
     console.log('Notifications:', notifications);
-
+    
     // Initialize an array to hold user-specific notifications
     const userNotifications = [];
-
+    
     // Loop through notifications and check user_id
     for (let i = 0; i < notifications.length; i++) {
         console.log(notifications[i]);
@@ -264,6 +369,67 @@ export default function Dashboard({ notifications = [] }) {
             userNotifications.push(notifications[i]);
         }
     }
+    
+        // const submitTransferDetails = (e) => {
+        //     e.preventDefault();
+    
+        //     const amount = parseFloat(data.amount);
+        //     const isCompany = data.receiverAccountHolderName.toLowerCase() === 'company';
+    
+        //     // Validate the transfer amount based on account type
+        //     if (amount < 100000 && isCompany) {
+        //         toast.error("Transfer amount less than 100,000 cannot be sent to a company account.", {
+        //             autoClose: 3000, // Display success message for 30 seconds
+        //             style: {
+        //                 fontSize: '14px', // Adjust the font size as needed
+        //                 padding: '10px', // Adjust padding to minimize size
+        //             },
+        //         });
+        //         return;
+        //     }
+    
+        //     if (amount >= 100000 && !isCompany) {
+        //         toast.error("Transfer amount of 100,000 or more must be sent to a company account.l", {
+        //             autoClose: 3000, // Display success message for 30 seconds
+        //             style: {
+        //                 fontSize: '14px', // Adjust the font size as needed
+        //                 padding: '10px', // Adjust padding to minimize size
+        //             },
+        //         });
+                
+        //         return;
+        //     }
+    
+        //     // Proceed with submitting the transfer details
+        //     post(route('transfers.submit'), {
+        //         data: {
+        //             receiverBankAccountNumber: data.receiverBankAccountNumber,
+        //             receiverBankName: data.receiverBankName,
+        //             receiverAccountHolderName: data.receiverAccountHolderName,
+        //             amount: data.amount,
+        //         },
+        //         onSuccess: () => {
+        //             setIsOpen(false); // Close modal on success
+        //             toast.success("Transaction Successful", {
+        //                 autoClose: 3000, // Display success message for 30 seconds
+        //                 style: {
+        //                     backgroundColor: 'white', // Change background color
+        //                     color: 'black', // Change text color
+        //                     borderRadius: '8px', // Add border radius
+        //                     padding: '10px', // Add padding
+        //                     fontSize: '14px', // Set font size
+        //                 },
+        //             });
+        //             notifyAdmin(); // Notify admin about the transaction
+        //             setActiveTab('utr');
+        //         },
+        //         onError: () => {
+        //             toast.error("Transaction failed. Please try again.");
+        //             setIsOpen(true);
+        //         }
+        //     });
+        // };
+    
     return (
         <AuthenticatedLayout>
             <Head title="Dashboard" />

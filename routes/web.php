@@ -29,7 +29,10 @@ Route::get('/user-transactions', [TransferController::class, 'getUserTransaction
 Route::middleware('auth')->group(function () {
     Route::get('/wallet', [WalletController::class, 'show'])->name('wallet');
     Route::post('/wallet', [WalletController::class, 'addFunds'])->name('wallet.addFunds');
+    Route::get('/wallet/balance', [WalletController::class, 'getBalance'])->name('wallet.balance');
+    Route::post('/wallet/deduct', [WalletController::class, 'deductFunds'])->name('wallet.deductFunds'); // Add this route
 });
+
 
 Route::post('/bank-details', [BankAccountController::class, 'store'])->name('bank-details.submit');
 
